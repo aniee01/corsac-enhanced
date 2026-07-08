@@ -1,0 +1,333 @@
+/*
+ * JBoss, Home of Professional Open Source
+ * Copyright 2011, Red Hat, Inc. and individual contributors
+ * Copyright 2019, Mobius Software LTD and individual contributors
+ * by the @authors tag. See the copyright.txt in the distribution for a
+ * full listing of individual contributors.
+ *
+ * This is free software; you can redistribute it and/or modify it
+ * under the terms of the GNU Lesser General Public License as
+ * published by the Free Software Foundation; either version 2.1 of
+ * the License, or (at your option) any later version.
+ *
+ * This software is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
+ * Lesser General Public License for more details.
+ *
+ * You should have received a copy of the GNU Lesser General Public
+ * License along with this software; if not, write to the Free
+ * Software Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA
+ * 02110-1301 USA, or see the FSF site: http://www.fsf.org.
+ */
+
+package org.restcomm.protocols.ss7.m3ua;
+
+import java.util.Collection;
+import java.util.Map;
+import java.util.UUID;
+
+import org.restcomm.protocols.ss7.m3ua.parameter.NetworkAppearance;
+import org.restcomm.protocols.ss7.m3ua.parameter.RoutingContext;
+import org.restcomm.protocols.ss7.m3ua.parameter.TrafficModeType;
+
+/**
+ * Interface for managing M3UA stack operations.
+ * 
+ * @author amit bhayani
+ * @author yulianoifa
+ */
+public interface M3UAManagement {
+
+    /**
+     * Unique name of this M3UA stack. The configuration of stack is persisted in name_m3ua.xml file.
+     *
+     * @return name of this stack
+     */
+    String getName();
+
+    /**
+     * Returns the maximum SLS value. Default is 256.
+     *
+     * @return maximum sequence number
+     */
+    int getMaxSequenceNumber();
+
+    /**
+     * Set the maximum SLS value.
+     *
+     * @param maxSequenceNumber maximum sequence number value
+     * @throws Exception if setting fails
+     */
+    void setMaxSequenceNumber(int maxSequenceNumber) throws Exception;
+
+    /**
+     * Returns maximum AS that can load-balance payload for a given route.
+     *
+     * @return maximum AS configured for route
+     */
+    int getMaxAsForRoute();
+
+    /**
+     * Set maximum AS that can be configured for a given route.
+     *
+     * @param maxAsForRoute maximum number of AS per route
+     * @throws Exception if setting fails
+     */
+    void setMaxAsForRoute(int maxAsForRoute) throws Exception;
+
+    /**
+     * Returns the time in milliseconds between two heartbeats.
+     *
+     * @return heartbeat interval in milliseconds
+     */
+    int getHeartbeatTime();
+
+    /**
+     * Set the time in milliseconds between two heartbeats. Heartbeat is only sent when MUA association is idle.
+     *
+     * @param timeBetweenHeartbeat heartbeat interval in milliseconds
+     * @throws Exception if setting fails
+     */
+    void setHeartbeatTime(int timeBetweenHeartbeat) throws Exception;
+
+    /**
+     * Returns whether LSB (Least Significant Bit) selection is used for linkset selection.
+     *
+     * @return true if LSB selection is used
+     */
+    boolean isUseLsbForLinksetSelection();
+
+    /**
+     * Enable or disable LSB for linkset selection.
+     *
+     * @param useLsbForLinksetSelection flag to enable or disable LSB selection
+     * @throws Exception if setting fails
+     */
+    void setUseLsbForLinksetSelection(boolean useLsbForLinksetSelection) throws Exception;
+
+    /**
+     * Returns the routing label format string.
+     *
+     * @return routing label format
+     */
+    String getRoutingLabelFormatStr();
+
+    /**
+     * Start M3UA stack.
+     *
+     * @throws Exception if start fails
+     */
+    void start() throws Exception;
+
+    /**
+     * Stop M3UA stack.
+     *
+     * @throws Exception if stop fails
+     */
+    void stop() throws Exception;
+
+    /**
+     * Returns true if this M3UA stack is started.
+     *
+     * @return true if stack is started
+     */
+    boolean isStarted();
+
+    /**
+     * Returns list of {@link As} configured for this stack.
+     *
+     * @return collection of application servers
+     */
+    Collection<As> getAppServers();
+
+    /**
+     * Returns list of {@link AspFactory} configured for this stack.
+     *
+     * @return collection of ASP factories
+     */
+    Collection<AspFactory> getAspfactories();
+
+    /**
+     * Create new {@link As}.
+     *
+     * @param asName unique name of the AS
+     * @param functionality {@link Functionality} of this AS
+     * @param exchangeType {@link ExchangeType} of this AS
+     * @param ipspType {@link IPSPType} of this AS (only if functionality is IPSP)
+     * @param rc optional {@link RoutingContext}
+     * @param trafficMode optional {@link TrafficModeType}
+     * @param minAspActiveForLoadbalance minimum {@link Asp} required to be ACTIVE for payload transfer
+     * @param na optional {@link NetworkAppearance}
+     * @return newly created {@link As}
+     * @throws Exception if creation fails
+     */
+    As createAs(String asName, Functionality functionality, ExchangeType exchangeType, IPSPType ipspType,
+                RoutingContext rc, TrafficModeType trafficMode, int minAspActiveForLoadbalance, NetworkAppearance na)
+                throws Exception;
+
+    /**
+     * Destroys the {@link As} that matches the passed asName. {@link As} should be DOWN before it can be destroyed.
+     *
+     * @param asName name of the AS to be destroyed
+     * @return destroyed {@link As}
+     * @throws Exception if destruction fails
+     */
+    As destroyAs(String asName) throws Exception;
+
+    /**
+     * Create a new {@link AspFactory}. HEARTBEAT is disabled.
+     *
+     * @param aspName unique name of this AspFactory
+     * @param associationName underlying SCTP association
+     * @return newly created {@link AspFactory}
+     * @throws Exception if creation fails
+     */
+    AspFactory createAspFactory(String aspName, String associationName) throws Exception;
+
+    /**
+     * Create a new {@link AspFactory}. Optionally enable HEARTBEAT.
+     *
+     * @param aspName unique name of this AspFactory
+     * @param associationName underlying SCTP association
+     * @param isHeartBeatEnabled enable HEARTBEAT if true
+     * @return newly created {@link AspFactory}
+     * @throws Exception if creation fails
+     */
+    AspFactory createAspFactory(String aspName, String associationName, boolean isHeartBeatEnabled) throws Exception;
+
+    /**
+     * Create a new {@link AspFactory} with explicit ASP id.
+     *
+     * @param aspName unique name of this AspFactory
+     * @param associationName underlying SCTP association
+     * @param aspid unique ASP id
+     * @param isHeartBeatEnabled enable HEARTBEAT if true
+     * @return newly created {@link AspFactory}
+     * @throws Exception if creation fails
+     */
+    AspFactory createAspFactory(String aspName, String associationName, long aspid, boolean isHeartBeatEnabled) throws Exception;
+
+    /**
+     * Destroys the {@link AspFactory} with the given name. All ASPs must be DOWN and unassigned.
+     *
+     * @param aspName name of the AspFactory to be destroyed
+     * @return destroyed {@link AspFactory}
+     * @throws Exception if destruction fails
+     */
+    AspFactory destroyAspFactory(String aspName) throws Exception;
+
+    /**
+     * Creates a new {@link Asp} and assigns it to {@link As}.
+     *
+     * @param asName name of the AS
+     * @param aspName name of the {@link AspFactory} to create ASP from
+     * @return newly created {@link Asp}
+     * @throws Exception if creation fails
+     */
+    Asp assignAspToAs(String asName, String aspName) throws Exception;
+
+    /**
+     * Unassigns {@link Asp} from {@link As}.
+     *
+     * @param asName name of the AS
+     * @param aspName name of the ASP
+     * @return unassigned {@link Asp}
+     * @throws Exception if unassignment fails
+     */
+    Asp unassignAspFromAs(String asName, String aspName) throws Exception;
+
+    /**
+     * Starts the {@link AspFactory} and all {@link Asp} within it.
+     *
+     * @param aspName name of the AspFactory
+     * @throws Exception if start fails
+     */
+    void startAsp(String aspName) throws Exception;
+
+    /**
+     * Stops the {@link AspFactory} and all {@link Asp} within it.
+     *
+     * @param aspName name of the AspFactory
+     * @throws Exception if stop fails
+     */
+    void stopAsp(String aspName) throws Exception;
+
+    /**
+     * Add a new route based on DPC, OPC, and SI. OPC and SI can be -1 as wildcards.
+     *
+     * @param dpc destination point code
+     * @param opc originating point code
+     * @param si service indicator
+     * @param asName name of {@link As}
+     * @throws Exception if adding route fails
+     */
+    @Deprecated
+    void addRoute(int dpc, int opc, int si, String asName) throws Exception;
+
+    /**
+     * Add a new route with traffic mode for load distribution.
+     *
+     * @param dpc destination point code
+     * @param opc originating point code
+     * @param si service indicator
+     * @param asName name of {@link As}
+     * @param trafficModeType {@link TrafficModeType} to decide traffic distribution
+     * @throws Exception if adding route fails
+     */
+    void addRoute(int dpc, int opc, int si, String asName, int trafficModeType) throws Exception;
+
+    /**
+     * Remove the AS for the given route.
+     *
+     * @param dpc destination point code
+     * @param opc originating point code
+     * @param si service indicator
+     * @param asName name of {@link As}
+     * @throws Exception if removal fails
+     */
+    void removeRoute(int dpc, int opc, int si, String asName) throws Exception;
+
+    /**
+     * Remove all resources of this M3UA stack.
+     *
+     * @throws Exception if removal fails
+     */
+    void removeAllResourses() throws Exception;
+
+    /**
+     * Add a {@link M3UAManagementEventListener}.
+     *
+     * @param key unique listener key
+     * @param m3uaManagementEventListener listener instance
+     */
+    void addM3UAManagementEventListener(UUID key, M3UAManagementEventListener m3uaManagementEventListener);
+
+    /**
+     * Remove a {@link M3UAManagementEventListener}.
+     *
+     * @param key unique listener key
+     */
+    void removeM3UAManagementEventListener(UUID key);
+
+    /**
+     * Returns the routing table mapping DPC to potential AS array.
+     *
+     * @return routing table map
+     */
+    Map<RoutingKey, RouteAs> getRoute();
+
+    /**
+     * Returns true if routing key management is enabled.
+     *
+     * @return true if enabled
+     */
+    boolean getRoutingKeyManagementEnabled();
+
+    /**
+     * Enable or disable routing key management.
+     *
+     * @param routingKeyManagementEnabled true to enable
+     */
+    void setRoutingKeyManagementEnabled(boolean routingKeyManagementEnabled);
+}

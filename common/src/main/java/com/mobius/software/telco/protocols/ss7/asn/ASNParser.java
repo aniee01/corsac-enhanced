@@ -82,6 +82,27 @@ public class ASNParser
 	private ConcurrentHashMap<LocalMappingKey, Class<?>> localClassesMapping = new ConcurrentHashMap<LocalMappingKey, Class<?>>();
 	private ConcurrentHashMap<String, Class<?>> defaultLocalClassesMapping = new ConcurrentHashMap<String, Class<?>>();
 
+	// Per-class cache of Class.getMethods(). getMethods() returns a fresh defensive COPY of
+	// the public-method array on every call (Class.copyMethods -> Method.copy per method),
+	// and the encode/decode/getLength/validate scans below call it once per field, per
+	// message, purely to find a single @ASNEncode/@ASNDecode/@ASNLength/@ASNValidate method.
+	// Under load that clone dominated CPU and allocation (java.lang.reflect.Method was ~80%
+	// of all allocations). The public-method set of a protocol class is immutable for the
+	// life of the JVM, and callers only READ the array, so memoizing it is safe and shares
+	// one array across all parser instances. Static: keyed by Class, identity is stable.
+	private static final ConcurrentHashMap<Class<?>, Method[]> METHODS_CACHE = new ConcurrentHashMap<Class<?>, Method[]>();
+
+	private static Method[] cachedMethods(Class<?> type)
+	{
+		Method[] methods = METHODS_CACHE.get(type);
+		if (methods == null)
+		{
+			methods = type.getMethods();
+			METHODS_CACHE.put(type, methods);
+		}
+		return methods;
+	}
+
 	private Boolean skipErrors = false;
 	private ASNParser parentParser;
 	private ASNDecodeHandler handler;
@@ -481,7 +502,7 @@ public class ASNParser
 
 		if (!cachedData.getSubFieldsFound())
 		{
-			Method[] methods = effectiveClass.getMethods();
+			Method[] methods = cachedMethods(effectiveClass);
 			for (Method method : methods)
 			{
 				ASNDecode asnDecode = method.getAnnotation(ASNDecode.class);
@@ -730,7 +751,7 @@ public class ASNParser
 		if (cachedData == null)
 			cachedData = processField(value.getClass(), cachedElements);
 
-		Method[] methods = value.getClass().getMethods();
+		Method[] methods = cachedMethods(value.getClass());
 		for (Method method : methods)
 		{
 			ASNValidate asnValidate = method.getAnnotation(ASNValidate.class);
@@ -978,7 +999,7 @@ public class ASNParser
 
 		if (!cachedData.getSubFieldsFound())
 		{
-			Method[] methods = value.getClass().getMethods();
+			Method[] methods = cachedMethods(value.getClass());
 			for (Method method : methods)
 			{
 				ASNEncode asnEncode = method.getAnnotation(ASNEncode.class);
@@ -1123,7 +1144,7 @@ public class ASNParser
 
 		if (!parserData.getSubFieldsFound())
 		{
-			Method[] methods = value.getClass().getMethods();
+			Method[] methods = cachedMethods(value.getClass());
 			for (Method method : methods)
 			{
 				ASNLength asnLength = method.getAnnotation(ASNLength.class);

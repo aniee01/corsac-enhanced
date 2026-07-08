@@ -166,6 +166,9 @@ public abstract class Mtp3UserPartBaseImpl implements Mtp3UserPart {
 
 		this.mtp3TransferPrimitiveFactory = new Mtp3TransferPrimitiveFactory(this.routingLabelFormat);
 		this.isStarted = true;
+		logger.error(String
+				.format("set mtp3TransferPrimitiveFactory : %s", this.mtp3TransferPrimitiveFactory));
+
 	}
 
 	@Override
