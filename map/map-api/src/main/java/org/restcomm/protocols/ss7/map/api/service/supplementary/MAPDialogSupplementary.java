@@ -41,11 +41,11 @@ import org.restcomm.protocols.ss7.map.api.service.mobility.subscriberManagement.
 public interface MAPDialogSupplementary extends MAPDialog {
 
     Integer addRegisterSSRequest(SSCode ssCode, BasicServiceCode basicService, AddressString forwardedToNumber, ISDNAddressString forwardedToSubaddress,
-            Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser, ISDNAddressString longFTNSupported) throws MAPException;
+            Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser, boolean longFTNSupported) throws MAPException;
 
     Integer addRegisterSSRequest(int customInvokeTimeout, SSCode ssCode, BasicServiceCode basicService, AddressString forwardedToNumber,
             ISDNAddressString forwardedToSubaddress, Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser,
-            ISDNAddressString longFTNSupported) throws MAPException;
+            boolean longFTNSupported) throws MAPException;
 
     void addRegisterSSResponse(int invokeId, SSInfo ssInfo) throws MAPException;
 

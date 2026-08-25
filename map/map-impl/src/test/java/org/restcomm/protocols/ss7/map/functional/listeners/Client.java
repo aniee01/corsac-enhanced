@@ -1790,7 +1790,8 @@ public class Client extends MAPTestHarness {
 		BearerServiceCode bearerService = this.mapParameterFactory
 				.createBearerServiceCode(BearerServiceCodeValue.padAccessCA_9600bps);
 		BasicServiceCode basicService = this.mapParameterFactory.createBasicServiceCode(bearerService);
-		clientDialog.addRegisterSSRequest(ssCode, basicService, null, null, null, null, null, null);
+		// last arg is longFTN-Supported: now a boolean presence flag ([9] NULL), not an address
+		clientDialog.addRegisterSSRequest(ssCode, basicService, null, null, null, null, null, false);
 
 		super.handleSent(EventType.RegisterSS, null);
 		clientDialog.send(dummyCallback);

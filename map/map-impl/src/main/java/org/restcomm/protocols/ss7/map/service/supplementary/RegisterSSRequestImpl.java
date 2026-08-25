@@ -40,6 +40,7 @@ import com.mobius.software.telco.protocols.ss7.asn.annotations.ASNValidate;
 import com.mobius.software.telco.protocols.ss7.asn.exceptions.ASNParsingComponentException;
 import com.mobius.software.telco.protocols.ss7.asn.exceptions.ASNParsingComponentExceptionReason;
 import com.mobius.software.telco.protocols.ss7.asn.primitives.ASNInteger;
+import com.mobius.software.telco.protocols.ss7.asn.primitives.ASNNull;
 
 /**
 *
@@ -72,14 +73,25 @@ public class RegisterSSRequestImpl extends SupplementaryMessageImpl implements R
     @ASNProperty(asnClass=ASNClass.CONTEXT_SPECIFIC,tag=8,constructed=false,index=-1)
     private ASNInteger nbrUser;
     
-    @ASNProperty(asnClass=ASNClass.CONTEXT_SPECIFIC,tag=9,constructed=false,index=-1, defaultImplementation = ISDNAddressStringImpl.class)
-    private ISDNAddressString longFTNSupported;
+    // longFTN-Supported [9] NULL OPTIONAL — a bare NULL, never an address.
+    //
+    // This was declared as an ISDNAddressString with an ISDNAddressStringImpl default. A NULL carries
+    // zero content octets, and ISDNAddressString is TBCD with a minimum length, so decoding a NULL as
+    // one throws and TCAP answers the peer with a General problem reject and aborts the dialogue. The
+    // effect was that every registerSS from an MSC advertising long-FTN support failed, i.e. call
+    // forwarding could not be registered at all (observed live 2026-08-24, invokeID 79, dialogue
+    // 03fa0964). Every other class in this codebase models the same field correctly as ASNNull —
+    // SSForBSCodeImpl, VLRCapabilityImpl, SendRoutingInformationRequestImpl,
+    // ProvideRoamingNumberRequestImpl, AnyTimeSubscriptionInterrogationRequestImpl — so this was an
+    // outlier rather than a deliberate difference.
+    @ASNProperty(asnClass=ASNClass.CONTEXT_SPECIFIC,tag=9,constructed=false,index=-1)
+    private ASNNull longFTNSupported;
 
     public RegisterSSRequestImpl() {
     }
 
     public RegisterSSRequestImpl(SSCode ssCode, BasicServiceCode basicServiceCode, AddressString forwardedToNumber, ISDNAddressString forwardedToSubaddress,
-            Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser, ISDNAddressString longFTNSupported) {
+            Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser, boolean longFTNSupported) {
         this.ssCode = ssCode;
         this.basicServiceCode=basicServiceCode;
         this.forwardedToNumber = forwardedToNumber;
@@ -94,7 +106,8 @@ public class RegisterSSRequestImpl extends SupplementaryMessageImpl implements R
         if(nbrUser!=null)
         	this.nbrUser = new ASNInteger(nbrUser,"NBRUser",1,7,false);
         	
-        this.longFTNSupported = longFTNSupported;
+        if(longFTNSupported)
+        	this.longFTNSupported = new ASNNull();
     }
 
     public MAPMessageType getMessageType() {
@@ -150,8 +163,8 @@ public class RegisterSSRequestImpl extends SupplementaryMessageImpl implements R
     }
 
     @Override
-    public ISDNAddressString getLongFTNSupported() {
-        return longFTNSupported;
+    public boolean getLongFTNSupported() {
+        return longFTNSupported!=null;
     }
 
     @Override
@@ -195,8 +208,7 @@ public class RegisterSSRequestImpl extends SupplementaryMessageImpl implements R
             sb.append(", ");
         }
         if (this.longFTNSupported != null) {
-            sb.append("longFTNSupported=");
-            sb.append(longFTNSupported);
+            sb.append("longFTNSupported");
             sb.append(", ");
         }
 

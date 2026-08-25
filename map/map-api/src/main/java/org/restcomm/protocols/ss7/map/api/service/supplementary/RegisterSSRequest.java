@@ -77,6 +77,15 @@ public interface RegisterSSRequest extends SupplementaryMessage {
 
     Integer getNbrUser();
 
-    ISDNAddressString getLongFTNSupported();
+    /**
+     * {@code longFTN-Supported [9] NULL OPTIONAL} — a presence flag, not an address.
+     *
+     * <p>True when the peer advertised long-FTN support. Typed boolean to match the ASN.1 above and
+     * every other request in this API carrying the same field ({@code SendRoutingInformationRequest},
+     * {@code ProvideRoamingNumberRequest}, {@code AnyTimeSubscriptionInterrogationRequest},
+     * {@code AnyTimeModificationRequest}). It was previously an {@code ISDNAddressString}, which made
+     * decoding a conformant NULL throw and the dialogue abort.
+     */
+    boolean getLongFTNSupported();
 
 }

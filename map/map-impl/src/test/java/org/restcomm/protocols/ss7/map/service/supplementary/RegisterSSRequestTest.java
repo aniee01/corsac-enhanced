@@ -51,8 +51,12 @@ import io.netty.buffer.Unpooled;
 public class RegisterSSRequestTest {
 
     private byte[] getEncodedData1() {
-        return new byte[] { 48, 36, 4, 1, 18, -126, 1, 35, -124, 5, -111, 17, 1, 0, -15, -122, 5, -111, 17, 1, 0, -14, -123, 1, 1, -121, 1, 6, -120, 1, 2,
-                -119, 5, -111, 17, 1, 0, -13 };
+        // longFTN-Supported is [9] NULL, so it encodes as 0x89 0x00 — tag 9, zero length. This fixture
+        // previously carried it as a 5-octet address (0x89 0x05 91 11 01 00 F3), which is not what the
+        // ASN.1 permits and is what let the ISDNAddressString mistyping pass its own test. Dropping
+        // those 5 content octets shortens the SEQUENCE from 36 to 31.
+        return new byte[] { 48, 31, 4, 1, 18, -126, 1, 35, -124, 5, -111, 17, 1, 0, -15, -122, 5, -111, 17, 1, 0, -14, -123, 1, 1, -121, 1, 6, -120, 1, 2,
+                -119, 0 };
     }
 
     @Test
@@ -73,7 +77,7 @@ public class RegisterSSRequestTest {
         assertEquals((int)impl.getNoReplyConditionTime(), 1);
         assertEquals(impl.getDefaultPriority(), EMLPPPriority.priorityLevelA);
         assertEquals((int)impl.getNbrUser(), 2);
-        assertEquals(impl.getLongFTNSupported().getAddress(), "1110003");
+        assertTrue(impl.getLongFTNSupported());
 
     }
 
@@ -87,9 +91,7 @@ public class RegisterSSRequestTest {
         BasicServiceCodeImpl basicService = new BasicServiceCodeImpl(bearerService);
         AddressStringImpl forwardedToNumber = new AddressStringImpl(AddressNature.international_number, NumberingPlan.ISDN, "1110001");
         ISDNAddressStringImpl forwardedToSubaddress = new ISDNAddressStringImpl(AddressNature.international_number, NumberingPlan.ISDN, "1110002");
-        ISDNAddressStringImpl longFTNSupported = new ISDNAddressStringImpl(AddressNature.international_number, NumberingPlan.ISDN, "1110003");;
-
-        RegisterSSRequestImpl impl = new RegisterSSRequestImpl(ssCode, basicService, forwardedToNumber, forwardedToSubaddress, 1, EMLPPPriority.priorityLevelA, 2, longFTNSupported);
+        RegisterSSRequestImpl impl = new RegisterSSRequestImpl(ssCode, basicService, forwardedToNumber, forwardedToSubaddress, 1, EMLPPPriority.priorityLevelA, 2, true);
         ByteBuf buffer=parser.encode(impl);
         byte[] encodedData = new byte[buffer.readableBytes()];
         buffer.readBytes(encodedData);

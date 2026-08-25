@@ -72,7 +72,7 @@ public class MAPDialogSupplementaryImpl extends MAPDialogImpl implements MAPDial
 
     @Override
     public Integer addRegisterSSRequest(SSCode ssCode, BasicServiceCode basicService, AddressString forwardedToNumber, ISDNAddressString forwardedToSubaddress,
-            Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser, ISDNAddressString longFTNSupported) throws MAPException {
+            Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser, boolean longFTNSupported) throws MAPException {
         return this.addRegisterSSRequest(_Timer_Default, ssCode, basicService, forwardedToNumber, forwardedToSubaddress, noReplyConditionTime, defaultPriority,
                 nbrUser, longFTNSupported);
     }
@@ -80,7 +80,7 @@ public class MAPDialogSupplementaryImpl extends MAPDialogImpl implements MAPDial
     @Override
     public Integer addRegisterSSRequest(int customInvokeTimeout, SSCode ssCode, BasicServiceCode basicService, AddressString forwardedToNumber,
             ISDNAddressString forwardedToSubaddress, Integer noReplyConditionTime, EMLPPPriority defaultPriority, Integer nbrUser,
-            ISDNAddressString longFTNSupported) throws MAPException {
+            boolean longFTNSupported) throws MAPException {
         if ((this.appCntx.getApplicationContextName() != MAPApplicationContextName.networkFunctionalSsContext)
                 || this.appCntx.getApplicationContextVersion() != MAPApplicationContextVersion.version2)
             throw new MAPException("Bad application context name for addRegisterSSRequest: must be networkFunctionalSsContext_V2");
